@@ -3,6 +3,9 @@ import config.SudokuConfig;
 import GUI.SudokuGUI;
 import solver.SudokuSolver;
 
+import java.io.FileNotFoundException;
+import java.util.Collection;
+
 /**
  * The Main Sudoku class represents the model for the GUI and holds solutions to valid sudoku puzzles.
  *
@@ -12,10 +15,17 @@ public class SudokuMain {
     public static void main(String[] args) {
         SudokuConfig sc = null;
         if (args.length == 0){
-            sc = new SudokuConfig(new int[9][9]);
+            sc = new SudokuConfig(new char[9][9]);
         }
         else{
-            sc = new SudokuConfig(args[0]);
+            try{
+                sc = new SudokuConfig(args[0]);
+            }
+            catch (FileNotFoundException ignored){
+                System.err.println("File not found: " + args[0]);
+            }
         }
+        SudokuSolver solver = new SudokuSolver();
+        Collection<SudokuConfig> dfs = solver.solve(sc);
     }
 }
