@@ -15,11 +15,16 @@ public class SudokuMain {
     public static void main(String[] args) {
         SudokuConfig sc = null;
         if (args.length == 0){
-            sc = new SudokuConfig(new char[9][9]);
+            try{
+                sc = new SudokuConfig("data/empty.txt");
+            }
+            catch (FileNotFoundException ignored){
+                System.err.println("Something went wrong!");
+            }
         }
         else{
             try{
-                sc = new SudokuConfig(args[0]);
+                sc = new SudokuConfig("data/" + args[0]);
             }
             catch (FileNotFoundException ignored){
                 System.err.println("File not found: " + args[0]);
