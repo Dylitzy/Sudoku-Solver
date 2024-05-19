@@ -69,22 +69,28 @@ public class SudokuConfig {
      */
     public List<SudokuConfig> getSuccessors(){
         List<SudokuConfig> successors = new ArrayList<>();
-        char nextVal = cursorCol + 1 < DIM ? grid[cursorRow][cursorCol + 1] : grid[cursorRow + 1][0];
 
-        if (nextVal != '-'){
-            successors.add(new SudokuConfig(this, nextVal));
+        if (cursorCol + 1 < DIM){ // If there's a next column in the current row
+            char nextVal = grid[cursorRow][cursorCol + 1];
+            if (nextVal != '-'){
+                successors.add(new SudokuConfig(this, nextVal));
+            }
+            else{
+                for (char c = '1'; c <= '9'; c++){
+                    successors.add(new SudokuConfig(this, c));
+                }
+            }
         }
-        else{
-            successors.add(new SudokuConfig(this, '0'));
-            successors.add(new SudokuConfig(this, '1'));
-            successors.add(new SudokuConfig(this, '2'));
-            successors.add(new SudokuConfig(this, '3'));
-            successors.add(new SudokuConfig(this, '4'));
-            successors.add(new SudokuConfig(this, '5'));
-            successors.add(new SudokuConfig(this, '6'));
-            successors.add(new SudokuConfig(this, '7'));
-            successors.add(new SudokuConfig(this, '8'));
-            successors.add(new SudokuConfig(this, '9'));
+        else if (cursorRow + 1 < DIM){ // If there's a next row
+            char nextVal = grid[cursorRow + 1][0];
+            if (nextVal != '-'){
+                successors.add(new SudokuConfig(this, nextVal));
+            }
+            else{
+                for (char c = '1'; c <= '9'; c++){
+                    successors.add(new SudokuConfig(this, c));
+                }
+            }
         }
 
         return successors;
@@ -260,7 +266,7 @@ public class SudokuConfig {
         StringBuilder result = new StringBuilder();
         for (int r = 0; r < DIM; r++){
             for (int c = 0; c < DIM; c++){
-                result.append(grid[r][c]);
+                result.append(grid[r][c] + " ");
             }
             result.append("\n");
         }

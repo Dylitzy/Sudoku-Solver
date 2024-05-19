@@ -33,6 +33,11 @@ public class SudokuMain {
         }
         SudokuSolver solver = new SudokuSolver();
         Optional<SudokuConfig> solution = solver.solve(sc);
-        System.out.println(solution);
+        if (solution.isPresent()){
+            System.out.println(solution.get());
+        }
+        else{
+            System.out.println("No Solution!");
+        }
     }
 }
