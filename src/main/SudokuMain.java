@@ -5,6 +5,7 @@ import solver.SudokuSolver;
 
 import java.io.FileNotFoundException;
 import java.util.Collection;
+import java.util.Optional;
 
 /**
  * The Main Sudoku class represents the model for the GUI and holds solutions to valid sudoku puzzles.
@@ -31,6 +32,7 @@ public class SudokuMain {
             }
         }
         SudokuSolver solver = new SudokuSolver();
-        Collection<SudokuConfig> dfs = solver.solve(sc);
+        Optional<SudokuConfig> solution = solver.solve(sc);
+        System.out.println(solution);
     }
 }
