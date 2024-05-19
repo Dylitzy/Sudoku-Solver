@@ -68,31 +68,23 @@ public class SudokuConfig {
      * @return the list of this sudoku config's valid successors.
      */
     public List<SudokuConfig> getSuccessors(){
-        List<SudokuConfig> configs = new ArrayList<>();
         List<SudokuConfig> successors = new ArrayList<>();
         char nextVal = cursorCol + 1 < DIM ? grid[cursorRow][cursorCol + 1] : grid[cursorRow + 1][0];
 
-        if (nextVal != '-'){ // for cells that are already filled out
-            configs.add(new SudokuConfig(this, nextVal));
+        if (nextVal != '-'){
+            successors.add(new SudokuConfig(this, nextVal));
         }
-        else{ // for empty cells
-            configs.add(new SudokuConfig(this, '0'));
-            configs.add(new SudokuConfig(this, '1'));
-            configs.add(new SudokuConfig(this, '2'));
-            configs.add(new SudokuConfig(this, '3'));
-            configs.add(new SudokuConfig(this, '4'));
-            configs.add(new SudokuConfig(this, '5'));
-            configs.add(new SudokuConfig(this, '6'));
-            configs.add(new SudokuConfig(this, '7'));
-            configs.add(new SudokuConfig(this, '8'));
-            configs.add(new SudokuConfig(this, '9'));
-        }
-
-        // only return the valid successors
-        for (SudokuConfig sc : configs){
-            if (sc.isValid()){
-                successors.add(sc);
-            }
+        else{
+            successors.add(new SudokuConfig(this, '0'));
+            successors.add(new SudokuConfig(this, '1'));
+            successors.add(new SudokuConfig(this, '2'));
+            successors.add(new SudokuConfig(this, '3'));
+            successors.add(new SudokuConfig(this, '4'));
+            successors.add(new SudokuConfig(this, '5'));
+            successors.add(new SudokuConfig(this, '6'));
+            successors.add(new SudokuConfig(this, '7'));
+            successors.add(new SudokuConfig(this, '8'));
+            successors.add(new SudokuConfig(this, '9'));
         }
 
         return successors;
