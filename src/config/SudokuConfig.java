@@ -11,7 +11,7 @@ import java.util.*;
  */
 public class SudokuConfig {
     private final static int DIM = 9;
-    private final char[][] grid;
+    private final SudokuCell[][] grid;
     private int cursorRow;
     private int cursorCol;
 
@@ -22,18 +22,18 @@ public class SudokuConfig {
      * @throws FileNotFoundException if the filename is invalid or not found
      */
     public SudokuConfig(String filename) throws FileNotFoundException {
-        grid = new char[DIM][DIM];
+        grid = new SudokuCell[DIM][DIM];
         cursorRow = 0;
         cursorCol = 0;
-        int i = 0;
         try (Scanner in = new Scanner(new File(filename))){
             while (in.hasNextLine()){
-                String line = in.nextLine();
-                String[] fields = line.split(" ");
-                for (int j = 0; j < fields.length; j++){
-                    grid[i][j] = fields[j].charAt(0);
+                for (int i = 0; i < DIM; i++) {
+                    String line = in.nextLine();
+                    String[] fields = line.split(" ");
+                    for (int j = 0; j < fields.length; j++){
+                        grid[i][j] = new SudokuCell(i, j, fields[j].charAt(0));
+                    }
                 }
-                i++;
             }
         }
     }
@@ -46,9 +46,11 @@ public class SudokuConfig {
      * @param val   the value to store at new cursor location
      */
     public SudokuConfig(SudokuConfig other, char val){
-        this.grid = new char[DIM][DIM];
-        for (int i = 0; i < DIM; i++) {
-            this.grid[i] = Arrays.copyOf(other.grid[i], DIM);
+        this.grid = new SudokuCell[DIM][DIM];
+        for (int i = 0; i < DIM; i++){
+            for (int j = 0; j < DIM; j++){
+                this.grid[i][j] = new SudokuCell(i, j, other.grid[i][j].getVal());
+            }
         }
 
         this.cursorRow = other.cursorRow;
@@ -59,7 +61,7 @@ public class SudokuConfig {
             cursorRow++;
         }
 
-        this.grid[cursorRow][cursorCol] = val;
+        this.grid[cursorRow][cursorCol].setVal(val);
     }
 
     /**
@@ -71,11 +73,11 @@ public class SudokuConfig {
      * @param col cell's column
      */
     public SudokuConfig(SudokuConfig other, char val, int row, int col){
-        this.grid = new char[DIM][DIM];
+        this.grid = new SudokuCell[DIM][DIM];
         for (int i = 0; i < DIM; i++){
             this.grid[i] = Arrays.copyOf(other.grid[i], DIM);
         }
-        this.grid[row][col] = val;
+        this.grid[row][col].setVal(val);
     }
 
     /**
@@ -85,27 +87,14 @@ public class SudokuConfig {
      */
     public List<SudokuConfig> getSuccessors(){
         List<SudokuConfig> successors = new ArrayList<>();
-
-        if (cursorCol + 1 < DIM){ // If there's a next column in the current row
-            char nextVal = grid[cursorRow][cursorCol + 1];
-            if (nextVal != '-'){
-                successors.add(new SudokuConfig(this, nextVal));
-            }
-            else{
-                for (char c = '1'; c <= '9'; c++){
-                    successors.add(new SudokuConfig(this, c));
-                }
-            }
+        SudokuCell nextCell = cursorCol + 1 < DIM ? grid[cursorRow][cursorCol + 1] : cursorRow + 1 < DIM ? grid[cursorRow + 1][0] : grid[0][0];
+        if (nextCell.getVal() != '-'){
+            successors.add(new SudokuConfig(this, nextCell.getVal()));
         }
-        else if (cursorRow + 1 < DIM){ // If there's a next row
-            char nextVal = grid[cursorRow + 1][0];
-            if (nextVal != '-'){
-                successors.add(new SudokuConfig(this, nextVal));
-            }
-            else{
-                for (char c = '1'; c <= '9'; c++){
-                    successors.add(new SudokuConfig(this, c));
-                }
+        else{
+            List<Character> candidates = getCellCandidates(nextCell.getRow(), nextCell.getCol());
+            for (char c : candidates){
+                successors.add(new SudokuConfig(this, c));
             }
         }
 
@@ -119,19 +108,18 @@ public class SudokuConfig {
      * @return a list of the cell's candidates
      */
     public List<Character> getCellCandidates(int row, int col){
-        List<Character> candidates = new ArrayList<>();
-        if (grid[row][col] != '-'){
-            candidates.add(grid[row][col]);
+        if (grid[row][col].getVal() != '-'){
+            return new ArrayList<>();
         }
         else{
             for (char c = '1'; c <= '9'; c++){
                 SudokuConfig candidate = new SudokuConfig(this, c, row, col);
                 if (candidate.isValid()){
-                    candidates.add(c);
+                    grid[row][col].addCandidate(c);
                 }
             }
         }
-        return candidates;
+        return grid[row][col].getCandidates();
     }
 
     /**
@@ -150,8 +138,8 @@ public class SudokuConfig {
      */
     private boolean rowCheck(){
         Set<Character> uniqueSet = new HashSet<>();
-        for (char c : grid[cursorRow]){
-            if (c != '-' && !uniqueSet.add(c)){
+        for (SudokuCell c : grid[cursorRow]){
+            if (c.getVal() != '-' && !uniqueSet.add(c.getVal())){
                 return false;
             }
         }
@@ -167,7 +155,7 @@ public class SudokuConfig {
         Set<Character> uniqueSet = new HashSet<>();
         int i = 0;
         while (i < DIM){
-            char c = grid[i][cursorCol];
+            char c = grid[i][cursorCol].getVal();
             if (c != '-' && !uniqueSet.add(c)){
                 return false;
             }
@@ -228,7 +216,7 @@ public class SudokuConfig {
         Set<Character> uniqueSet = new HashSet<>();
         for (int r = row; r < row + 3; r++){
             for (int c = col; c < col + 3; c++){
-                char val = grid[r][c];
+                char val = grid[r][c].getVal();
                 if (val != '-' && !uniqueSet.add(val)){
                     return false;
                 }
@@ -249,25 +237,13 @@ public class SudokuConfig {
         else{
             for (int r = 0; r < DIM; r++){
                 for (int c = 0; c < DIM; c++){
-                    if (grid[r][c] == '-'){
+                    if (grid[r][c].getVal() == '-'){
                         return false;
                     }
                 }
             }
         }
         return true;
-    }
-
-    public int getCursorCol() {
-        return cursorCol;
-    }
-
-    public int getCursorRow() {
-        return cursorRow;
-    }
-
-    public char getVal(){
-        return grid[cursorRow][cursorCol];
     }
 
     /**
@@ -304,7 +280,7 @@ public class SudokuConfig {
         StringBuilder result = new StringBuilder();
         for (int r = 0; r < DIM; r++){
             for (int c = 0; c < DIM; c++){
-                result.append(grid[r][c] + " ");
+                result.append(grid[r][c]).append(" ");
             }
             result.append("\n");
         }

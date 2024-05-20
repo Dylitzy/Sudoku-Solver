@@ -21,7 +21,7 @@ public class SudokuSolver {
             for (int c = 0; c < 9; c++){
                 List<Character> candidates = sc.getCellCandidates(r, c);
                 if (candidates.size() == 1){
-                    sc = new SudokuConfig(sc, candidates.getFirst(), r, c);
+                    sc = new SudokuConfig(sc, candidates.get(0), r, c);
                 }
             }
         }

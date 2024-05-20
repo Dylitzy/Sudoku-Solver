@@ -4,7 +4,6 @@ import GUI.SudokuGUI;
 import solver.SudokuSolver;
 
 import java.io.FileNotFoundException;
-import java.util.Collection;
 import java.util.Optional;
 
 /**
