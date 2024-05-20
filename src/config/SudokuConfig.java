@@ -63,6 +63,22 @@ public class SudokuConfig {
     }
 
     /**
+     * The constructor used to determine validity of a cell's candidates.
+     *
+     * @param other the board to copy
+     * @param val the value to store at the cell's location
+     * @param row cell's row
+     * @param col cell's column
+     */
+    public SudokuConfig(SudokuConfig other, char val, int row, int col){
+        this.grid = new char[DIM][DIM];
+        for (int i = 0; i < DIM; i++){
+            this.grid[i] = Arrays.copyOf(other.grid[i], DIM);
+        }
+        this.grid[row][col] = val;
+    }
+
+    /**
      * Constructs and returns a list of this configuration's valid successors.
      *
      * @return the list of this sudoku config's valid successors.
@@ -94,6 +110,28 @@ public class SudokuConfig {
         }
 
         return successors;
+    }
+
+    /**
+     * Constructs the list of a cell's candidates, based on that cell's row and column position
+     * @param row cell's row
+     * @param col cells' column
+     * @return a list of the cell's candidates
+     */
+    public List<Character> getCellCandidates(int row, int col){
+        List<Character> candidates = new ArrayList<>();
+        if (grid[row][col] != '-'){
+            candidates.add(grid[row][col]);
+        }
+        else{
+            for (char c = '1'; c <= '9'; c++){
+                SudokuConfig candidate = new SudokuConfig(this, c, row, col);
+                if (candidate.isValid()){
+                    candidates.add(c);
+                }
+            }
+        }
+        return candidates;
     }
 
     /**
