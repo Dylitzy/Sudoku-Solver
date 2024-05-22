@@ -24,7 +24,7 @@ public class SudokuConfig {
     public SudokuConfig(String filename) throws FileNotFoundException {
         grid = new SudokuCell[DIM][DIM];
         cursorRow = 0;
-        cursorCol = 0;
+        cursorCol = -1;
         try (Scanner in = new Scanner(new File(filename))){
             while (in.hasNextLine()){
                 for (int i = 0; i < DIM; i++) {
@@ -58,7 +58,9 @@ public class SudokuConfig {
 
         if (cursorCol >= DIM) {
             cursorCol = 0;
-            cursorRow++;
+            if (cursorRow + 1 < DIM){
+                cursorRow++;
+            }
         }
 
         this.grid[cursorRow][cursorCol].setVal(val);
@@ -75,7 +77,9 @@ public class SudokuConfig {
     public SudokuConfig(SudokuConfig other, char val, int row, int col){
         this.grid = new SudokuCell[DIM][DIM];
         for (int i = 0; i < DIM; i++){
-            this.grid[i] = Arrays.copyOf(other.grid[i], DIM);
+            for (int j = 0; j < DIM; j++){
+                this.grid[i][j] = new SudokuCell(i, j, other.grid[i][j].getVal());
+            }
         }
         this.grid[row][col].setVal(val);
     }
@@ -104,22 +108,20 @@ public class SudokuConfig {
     /**
      * Constructs the list of a cell's candidates, based on that cell's row and column position
      * @param row cell's row
-     * @param col cells' column
+     * @param col cell's column
      * @return a list of the cell's candidates
      */
     public List<Character> getCellCandidates(int row, int col){
-        if (grid[row][col].getVal() != '-'){
-            return new ArrayList<>();
-        }
-        else{
+        if (grid[row][col].getVal() == '-'){
             for (char c = '1'; c <= '9'; c++){
                 SudokuConfig candidate = new SudokuConfig(this, c, row, col);
                 if (candidate.isValid()){
                     grid[row][col].addCandidate(c);
                 }
             }
+            return grid[row][col].getCandidates();
         }
-        return grid[row][col].getCandidates();
+        return new ArrayList<>();
     }
 
     /**
@@ -231,15 +233,10 @@ public class SudokuConfig {
      * @return whether the sudoku config is a solution or not.
      */
     public boolean isSolution(){
-        if (!isValid()){
-            return false;
-        }
-        else{
-            for (int r = 0; r < DIM; r++){
-                for (int c = 0; c < DIM; c++){
-                    if (grid[r][c].getVal() == '-'){
-                        return false;
-                    }
+        for (int r = 0; r < DIM; r++){
+            for (int c = 0; c < DIM; c++){
+                if (grid[r][c].getVal() == '-'){
+                    return false;
                 }
             }
         }
