@@ -60,11 +60,19 @@ public class SudokuCell {
     }
 
     /**
-     * Gets the set of this cell's candidates
-     * @return the set of candidates
+     * Gets the list of this cell's candidates
+     * @return the list of candidates
      */
     public List<Character> getCandidates() {
         return candidates;
+    }
+
+    /**
+     * Sets the list of this cell's candidates, only used when
+     * copying from another configuration
+     */
+    public void setCandidates(List<Character> candidates) {
+        this.candidates = candidates;
     }
 
     /**

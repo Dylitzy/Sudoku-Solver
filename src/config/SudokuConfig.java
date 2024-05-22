@@ -24,7 +24,7 @@ public class SudokuConfig {
     public SudokuConfig(String filename) throws FileNotFoundException {
         grid = new SudokuCell[DIM][DIM];
         cursorRow = 0;
-        cursorCol = -1;
+        cursorCol = 0;
         try (Scanner in = new Scanner(new File(filename))){
             while (in.hasNextLine()){
                 for (int i = 0; i < DIM; i++) {
@@ -79,6 +79,7 @@ public class SudokuConfig {
         for (int i = 0; i < DIM; i++){
             for (int j = 0; j < DIM; j++){
                 this.grid[i][j] = new SudokuCell(i, j, other.grid[i][j].getVal());
+                this.grid[i][j].setCandidates(other.grid[i][j].getCandidates());
             }
         }
         this.grid[row][col].setVal(val);
@@ -112,10 +113,13 @@ public class SudokuConfig {
      * @return a list of the cell's candidates
      */
     public List<Character> getCellCandidates(int row, int col){
-        if (grid[row][col].getVal() == '-'){
+        if (!grid[row][col].getCandidates().isEmpty()){
+            return grid[row][col].getCandidates();
+        }
+        else if (grid[row][col].getVal() == '-'){
             for (char c = '1'; c <= '9'; c++){
                 SudokuConfig candidate = new SudokuConfig(this, c, row, col);
-                if (candidate.isValid()){
+                if (candidate.isValid(row, col)){
                     grid[row][col].addCandidate(c);
                 }
             }
@@ -129,8 +133,8 @@ public class SudokuConfig {
      *
      * @return whether the sudoku config is valid or not.
      */
-    public boolean isValid(){
-        return rowCheck() && colCheck() && boxCheck();
+    public boolean isValid(int row, int col){
+        return rowCheck(row) && colCheck(col) && boxCheck(row, col);
     }
 
     /**
@@ -138,9 +142,9 @@ public class SudokuConfig {
      *
      * @return whether the current row is valid or not.
      */
-    private boolean rowCheck(){
+    private boolean rowCheck(int row){
         Set<Character> uniqueSet = new HashSet<>();
-        for (SudokuCell c : grid[cursorRow]){
+        for (SudokuCell c : grid[row]){
             if (c.getVal() != '-' && !uniqueSet.add(c.getVal())){
                 return false;
             }
@@ -153,11 +157,11 @@ public class SudokuConfig {
      *
      * @return whether the current row is valid or not.
      */
-    private boolean colCheck(){
+    private boolean colCheck(int col){
         Set<Character> uniqueSet = new HashSet<>();
         int i = 0;
         while (i < DIM){
-            char c = grid[i][cursorCol].getVal();
+            char c = grid[i][col].getVal();
             if (c != '-' && !uniqueSet.add(c)){
                 return false;
             }
@@ -171,23 +175,23 @@ public class SudokuConfig {
      *
      * @return whether the current box is valid or not.
      */
-    private boolean boxCheck(){
-        if (cursorRow <= 2){
-            if (cursorCol <= 2){
+    private boolean boxCheck(int row, int col){
+        if (row <= 2){
+            if (col <= 2){
                 return iterateBoxBounds(0, 0);
             }
-            else if (cursorCol <= 5){
+            else if (col <= 5){
                 return iterateBoxBounds(0, 3);
             }
             else{
                 return iterateBoxBounds(0, 6);
             }
         }
-        else if (cursorRow <= 5){
-            if (cursorCol <= 2){
+        else if (row <= 5){
+            if (col <= 2){
                 return iterateBoxBounds(3, 0);
             }
-            else if (cursorCol <= 5){
+            else if (col <= 5){
                 return iterateBoxBounds(3, 3);
             }
             else{
@@ -195,10 +199,10 @@ public class SudokuConfig {
             }
         }
         else{
-            if (cursorCol <= 2){
+            if (col <= 2){
                 return iterateBoxBounds(6, 0);
             }
-            else if (cursorCol <= 5){
+            else if (col <= 5){
                 return iterateBoxBounds(6, 3);
             }
             else{
@@ -241,6 +245,30 @@ public class SudokuConfig {
             }
         }
         return true;
+    }
+
+    /**
+     * Gets the row the cursor is pointing at
+     * @return cursor row
+     */
+    public int getCursorRow() {
+        return cursorRow;
+    }
+
+    /**
+     * Gets the column the cursor is pointing at
+     * @return cursor column
+     */
+    public int getCursorCol() {
+        return cursorCol;
+    }
+
+    /**
+     * Gets the grid that represents the Sudoku Puzzle
+     * @return the grid
+     */
+    public SudokuCell[][] getGrid() {
+        return grid;
     }
 
     /**
