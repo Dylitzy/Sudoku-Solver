@@ -69,7 +69,7 @@ public class SudokuCell {
 
     /**
      * Sets the list of this cell's candidates, only used when
-     * copying from another configuration
+     * copying from another configuration or clearing the list
      */
     public void setCandidates(List<Character> candidates) {
         this.candidates = candidates;

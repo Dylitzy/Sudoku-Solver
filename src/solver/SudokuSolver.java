@@ -26,9 +26,28 @@ public class SudokuSolver {
             Map<Integer, Character> newRow = Candidates.rowCandidateCheck(sc.getGrid(), i);
             for (int k : newRow.keySet()){
                 sc.getGrid()[i][k].setVal(newRow.get(k));
-                Candidates.configure(sc, i, k, newRow.get(k));
+                Candidates.configure(sc, i, k, newRow.get(k), 'r');
             }
         }
+
+        for (int i = 0; i < 9; i++){
+            Map<Integer, Character> newCol = Candidates.colCandidateCheck(sc.getGrid(), i);
+            for (int j : newCol.keySet()){
+                sc.getGrid()[j][i].setVal(newCol.get(j));
+                Candidates.configure(sc, i, j, newCol.get(j), 'c');
+            }
+        }
+
+        for (int i = 1; i < 7; i += 2){
+            for (int j = 1; j < 7; j += 2){
+                Map<Integer[], Character> newBox = Candidates.boxCandidateCheck(sc.getGrid(), i, j);
+                for (Integer[] k : newBox.keySet()){
+                    sc.getGrid()[k[0]][k[1]].setVal(newBox.get(k));
+                    Candidates.configure(sc, k[0], k[1], newBox.get(k), 'b');
+                }
+            }
+        }
+
         return sc;
     }
 
