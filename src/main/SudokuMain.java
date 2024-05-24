@@ -31,6 +31,7 @@ public class SudokuMain {
             }
         }
         SudokuSolver solver = new SudokuSolver();
+        sc = solver.soften(sc);
         Optional<SudokuConfig> solution = solver.solve(sc);
         if (solution.isPresent()){
             System.out.println(solution.get());

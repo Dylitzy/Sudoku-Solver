@@ -76,19 +76,11 @@ public class SudokuCell {
     }
 
     /**
-     * Adds a candidate to the set of this cell's candidates
+     * Adds a candidate to the list of this cell's candidates
      * @param c the candidate to be added
      */
     public void addCandidate(char c){
         candidates.add(c);
-    }
-
-    /**
-     * Removes a candidate from the set of this cell's candidates
-     * @param c the candidate to be removed.
-     */
-    public void removeCandidate(char c){
-        candidates.remove(c);
     }
 
     /**

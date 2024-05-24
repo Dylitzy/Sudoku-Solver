@@ -23,6 +23,11 @@ public class SudokuSolver {
             for (int j = 0; j < 9; j++){
                 sc.getCellCandidates(i, j);
             }
+            Map<Integer, Character> newRow = Candidates.rowCandidateCheck(sc.getGrid(), i);
+            for (int k : newRow.keySet()){
+                sc.getGrid()[i][k].setVal(newRow.get(k));
+                Candidates.configure(sc, i, k, newRow.get(k));
+            }
         }
         return sc;
     }
