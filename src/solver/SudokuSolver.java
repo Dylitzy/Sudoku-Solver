@@ -1,5 +1,6 @@
 package solver;
 
+import config.SudokuCell;
 import config.SudokuConfig;
 import main.Candidates;
 
@@ -21,7 +22,11 @@ public class SudokuSolver {
     public SudokuConfig soften(SudokuConfig sc){
         for (int i = 0; i < 9; i++){
             for (int j = 0; j < 9; j++){
-                sc.getCellCandidates(i, j);
+                List<Character> candidates = sc.getCellCandidates(i, j);
+                if (candidates.size() == 1){
+                    sc.getGrid()[i][j].setVal(candidates.getFirst());
+                    Candidates.configure(sc, i, j, candidates.getFirst(), 'n');
+                }
             }
             Map<Integer, Character> newRow = Candidates.rowCandidateCheck(sc.getGrid(), i);
             for (int k : newRow.keySet()){
@@ -31,10 +36,11 @@ public class SudokuSolver {
         }
 
         for (int i = 0; i < 9; i++){
-            Map<Integer, Character> newCol = Candidates.colCandidateCheck(sc.getGrid(), i);
+            SudokuCell[][] grid = sc.getGrid();
+            Map<Integer, Character> newCol = Candidates.colCandidateCheck(grid, i);
             for (int j : newCol.keySet()){
-                sc.getGrid()[j][i].setVal(newCol.get(j));
-                Candidates.configure(sc, i, j, newCol.get(j), 'c');
+                grid[j][i].setVal(newCol.get(j));
+                Candidates.configure(sc, j, i, newCol.get(j), 'c');
             }
         }
 

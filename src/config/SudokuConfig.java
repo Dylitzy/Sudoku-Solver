@@ -24,7 +24,7 @@ public class SudokuConfig {
     public SudokuConfig(String filename) throws FileNotFoundException {
         grid = new SudokuCell[DIM][DIM];
         cursorRow = 0;
-        cursorCol = 0;
+        cursorCol = -1;
         try (Scanner in = new Scanner(new File(filename))){
             while (in.hasNextLine()){
                 for (int i = 0; i < DIM; i++) {
