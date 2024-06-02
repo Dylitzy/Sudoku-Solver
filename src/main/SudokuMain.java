@@ -15,13 +15,9 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import solver.SudokuSolver;
 
-import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.*;
 import java.nio.file.Paths;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Scanner;
+import java.util.*;
 
 /**
  * The Main Sudoku Class represents the Model, View, and Controller for the GUI of this Sudoku Solver project.
@@ -37,6 +33,7 @@ public class SudokuMain extends Application {
     private GridPane gp;
     private BorderPane bp;
     private Button currentButton;
+    private char[][] grid;
 
     @Override
     public void start(Stage stage){
@@ -48,7 +45,7 @@ public class SudokuMain extends Application {
         bp.setTop(TopText);
 
         // GUI center
-        makeSudokuGrid(new String[9][9]);
+        grid = makeSudokuGrid(new char[9][9]);
 
         // GUI bottom
         FlowPane fp = new FlowPane();
@@ -62,43 +59,19 @@ public class SudokuMain extends Application {
             String currentPath = Paths.get(".", "data").toAbsolutePath().normalize().toString();
             fileChooser.setInitialDirectory(new File(currentPath));
             File file = fileChooser.showOpenDialog(stage);
-
-            // Take the file and convert into a 2D array of strings, helpful when setting up the GUI for the loaded puzzle.
-            String[][] boardsetup = new String[9][9];
-            try{
-                try (Scanner in = new Scanner(file)){
-                    while (in.hasNextLine()){
-                        for (int i = 0; i < 9; i++) {
-                            String line = in.nextLine();
-                            String[] fields = line.split(" ");
-                            for (int j = 0; j < fields.length; j++){
-                                if (!fields[j].equals("-")){
-                                    boardsetup[i][j] = fields[j];
-                                }
-                            }
-                        }
-                    }
-                }
-                makeSudokuGrid(boardsetup);
-                TopText.setText("Loaded " + file.getName() + "!");
-            }
-            catch(FileNotFoundException ignored){
-                System.err.println("File could not be found!");
-            }
+            load(file);
         });
         fp.getChildren().add(solveButton);
         solveButton.setMinHeight(50);
         solveButton.setMinWidth(75);
         solveButton.setStyle("-fx-font-size:16px");
-        solveButton.setOnAction(event -> {
-           // TODO
-        });
+        solveButton.setOnAction(event -> solve());
         fp.getChildren().add(resetButton);
         resetButton.setMinHeight(50);
         resetButton.setMinWidth(75);
         resetButton.setStyle("-fx-font-size:16px");
         resetButton.setOnAction(event -> {
-            makeSudokuGrid(new String[9][9]);
+            makeSudokuGrid(new char[9][9]);
             TopText.setText("Reset!");
         });
         fp.setAlignment(Pos.CENTER);
@@ -133,14 +106,15 @@ public class SudokuMain extends Application {
         }
     }
 
-    private void makeSudokuGrid(String[][] text){
+    private char[][] makeSudokuGrid(char[][] grid){
         gp = new GridPane();
         for (int r = 0; r < 3; r++){
             for (int c = 0; c < 3; c++){
                 GridPane box = new GridPane();
                 for (int row = 0; row < 3; row++){
                     for (int col = 0; col < 3; col++){
-                        Button button = new Button(text[r * 3 + row][c * 3 + col]);
+                        String buttonText = String.valueOf(grid[r * 3 + row][c * 3 + col]);
+                        Button button = new Button(buttonText.equals("-") ? "" : buttonText);
                         button.setStyle("-fx-font-size:16px; -fx-font-weight:bold");
                         button.setMinSize(50, 50);
                         box.add(button, col, row);
@@ -153,6 +127,96 @@ public class SudokuMain extends Application {
         gp.setGridLinesVisible(true);
         gp.setAlignment(Pos.CENTER);
         bp.setCenter(gp);
+        return grid;
+    }
+
+    private char[][] showSolution(SudokuCell[][] solution, char[][] grid){
+        gp = new GridPane();
+        for (int r = 0; r < 3; r++){
+            for (int c = 0; c < 3; c++){
+                GridPane box = new GridPane();
+                for (int row = 0; row < 3; row++){
+                    for (int col = 0; col < 3; col++){
+                        String buttonText = String.valueOf(solution[r * 3 + row][c * 3 + col]);
+                        Button button = new Button(buttonText.equals("-") ? "" : buttonText);
+                        if (solution[r * 3 + row][c * 3 + col].getVal() == grid[r * 3 + row][c * 3 + col]){
+                            button.setStyle("-fx-font-size:16px; -fx-font-weight:bold");
+                        }
+                        else{
+                            button.setStyle("-fx-font-size:16px; -fx-font-weight:bold; -fx-text-fill:rgb(30,165,215)");
+                        }
+                        grid[r * 3 + row][c * 3 + col] = solution[r * 3 + row][c * 3 + col].getVal();
+                        button.setMinSize(50, 50);
+                        box.add(button, col, row);
+                        button.setOnAction(e -> setClicked(button));
+                    }
+                }
+                gp.add(box, c, r);
+            }
+        }
+        gp.setGridLinesVisible(true);
+        gp.setAlignment(Pos.CENTER);
+        bp.setCenter(gp);
+        return grid;
+    }
+
+    private void load(File file){
+        grid = new char[9][9];
+        try{
+            try (Scanner in = new Scanner(file)){
+                while (in.hasNextLine()){
+                    for (int i = 0; i < 9; i++) {
+                        String line = in.nextLine();
+                        String[] fields = line.split(" ");
+                        for (int j = 0; j < fields.length; j++){
+                            grid[i][j] = fields[j].charAt(0);
+                        }
+                    }
+                }
+            }
+            makeSudokuGrid(grid);
+            TopText.setText("Loaded " + file.getName() + "!");
+        }
+        catch(FileNotFoundException ignored){
+            System.err.println("File could not be found!");
+        }
+    }
+
+    private void solve(){
+        try{
+            try (BufferedWriter fileWriter = new BufferedWriter(new FileWriter("data/custom.txt"))){
+                for (int r = 0; r < 9; r++){
+                    for (int c = 0; c < 9; c++){
+                        fileWriter.write(grid[r][c]);
+                        fileWriter.write(" ");
+                    }
+                    fileWriter.newLine();
+                }
+            }
+
+            // TODO: checks for less than 8 unique values and less than 16 values
+
+            SudokuConfig sc = new SudokuConfig("data/custom.txt");
+            if (sc.isSolution()){
+                TopText.setText("Already solved!");
+            }
+            else{
+                TopText.setText("Working...");
+                SudokuSolver solver = new SudokuSolver();
+                sc = solver.soften(sc);
+                Optional<SudokuConfig> solution = solver.solve(sc);
+                if (solution.isPresent()){
+                    showSolution(solution.get().getGrid(), grid);
+                    TopText.setText("Solved!");
+                }
+                else{
+                    TopText.setText("No Solution!");
+                }
+            }
+        }
+        catch(IOException ignored){
+            System.err.println("Something went wrong!");
+        }
     }
 
     public static void main(String[] args) {
