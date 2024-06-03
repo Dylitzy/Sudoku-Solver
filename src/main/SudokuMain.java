@@ -27,10 +27,10 @@ import java.util.*;
  * @author Dylan Sturr
  */
 public class SudokuMain extends Application {
-    private Label TopText = new Label("Welcome to Sudoku Solver!");
-    private Button loadButton = new Button("Load");
-    private Button solveButton = new Button("Solve");
-    private Button resetButton = new Button("Reset");
+    private final Label TopText = new Label("Welcome to Sudoku Solver!");
+    private final Button loadButton = new Button("Load");
+    private final Button solveButton = new Button("Solve");
+    private final Button resetButton = new Button("Reset");
     // TODO: In the future, a button to show display a cell's candidates
     private GridPane gp;
     private BorderPane bp;
@@ -154,7 +154,7 @@ public class SudokuMain extends Application {
     }
 
     /**
-     * Initializes the grid as a grid of empty cells. '-'
+     * Initializes the grid as a 9x9 2D Array of empty cells. '-'
      */
     private void initGrid(){
         grid = new char[9][9];
@@ -256,7 +256,7 @@ public class SudokuMain extends Application {
     }
 
     /**
-     * The action that occurs when the solve button is pushed. This method is broken down into three steps,
+     * The action that occurs when the solve button is pushed. This method is broken down into four steps,
      * which are documented as the code goes on.
      */
     private void solve(){
@@ -272,8 +272,30 @@ public class SudokuMain extends Application {
                 }
             }
 
+            // checks for a puzzle that is automatically invalid due to violating sudoku rules
+            SudokuConfig sc = new SudokuConfig("data/custom.txt");
+            for (int r = 0; r < 9; r++){
+                if (!sc.rowCheck(r)){
+                    int finalR = r;
+                    Platform.runLater(() -> TopText.setText("Error: Row " + (finalR + 1) + " is invalid."));
+                    return;
+                }
+                for (int c = 0; c < 9; c++){
+                    if (!sc.colCheck(c)){
+                        int finalC = c;
+                        Platform.runLater(() -> TopText.setText("Error: Column " + (finalC + 1) + " is invalid."));
+                        return;
+                    }
+                    if (!sc.boxCheck(r, c)){
+                        int finalR = r;
+                        int finalC = c;
+                        Platform.runLater(() -> TopText.setText("Error: Box starting at (" + finalR + ", " + finalC + ") is invalid."));
+                        return;
+                    }
+                }
+            }
+
             // checks for puzzles that are unsolvable due to lack of information, like not enough values
-            // TODO: in the future, checks for blatantly invalid puzzles (break the rules)
             int[] count = new int[9];
             int sum;
             int j = 0;
@@ -303,7 +325,6 @@ public class SudokuMain extends Application {
             }
 
             // Solve the puzzle, unless it is already solved
-            SudokuConfig sc = new SudokuConfig("data/custom.txt");
             if (sc.isSolution()){
                 Platform.runLater(() -> TopText.setText("Already solved!"));
             }

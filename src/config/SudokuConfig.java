@@ -142,7 +142,7 @@ public class SudokuConfig {
      *
      * @return whether the current row is valid or not.
      */
-    private boolean rowCheck(int row){
+    public boolean rowCheck(int row){
         Set<Character> uniqueSet = new HashSet<>();
         for (SudokuCell c : grid[row]){
             if (c.getVal() != '-' && !uniqueSet.add(c.getVal())){
@@ -157,7 +157,7 @@ public class SudokuConfig {
      *
      * @return whether the current row is valid or not.
      */
-    private boolean colCheck(int col){
+    public boolean colCheck(int col){
         Set<Character> uniqueSet = new HashSet<>();
         int i = 0;
         while (i < DIM){
@@ -175,53 +175,12 @@ public class SudokuConfig {
      *
      * @return whether the current box is valid or not.
      */
-    private boolean boxCheck(int row, int col){
-        if (row <= 2){
-            if (col <= 2){
-                return iterateBoxBounds(0, 0);
-            }
-            else if (col <= 5){
-                return iterateBoxBounds(0, 3);
-            }
-            else{
-                return iterateBoxBounds(0, 6);
-            }
-        }
-        else if (row <= 5){
-            if (col <= 2){
-                return iterateBoxBounds(3, 0);
-            }
-            else if (col <= 5){
-                return iterateBoxBounds(3, 3);
-            }
-            else{
-                return iterateBoxBounds(3, 6);
-            }
-        }
-        else{
-            if (col <= 2){
-                return iterateBoxBounds(6, 0);
-            }
-            else if (col <= 5){
-                return iterateBoxBounds(6, 3);
-            }
-            else{
-                return iterateBoxBounds(6, 6);
-            }
-        }
-    }
-
-    /**
-     * Helper method for the method that checks for box validity.
-     *
-     * @param row the row the box ends at
-     * @param col the col the box ends at
-     * @return whether the box is unique or not.
-     */
-    private boolean iterateBoxBounds(int row, int col){
+    public boolean boxCheck(int row, int col){
+        int absoluterow = (row / 3) * 3;
+        int absolutecol = (col / 3) * 3;
         Set<Character> uniqueSet = new HashSet<>();
-        for (int r = row; r < row + 3; r++){
-            for (int c = col; c < col + 3; c++){
+        for (int r = absoluterow; r < absoluterow + 3; r++){
+            for (int c = absolutecol; c < absolutecol + 3; c++){
                 char val = grid[r][c].getVal();
                 if (val != '-' && !uniqueSet.add(val)){
                     return false;
