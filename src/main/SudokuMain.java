@@ -31,11 +31,13 @@ public class SudokuMain extends Application {
     private final Button loadButton = new Button("Load");
     private final Button solveButton = new Button("Solve");
     private final Button resetButton = new Button("Reset");
+    private final Button hintButton = new Button("Hint");
     // TODO: In the future, a button to show display a cell's candidates
     private GridPane gp;
     private BorderPane bp;
     private Button currentButton;
     private char[][] grid;
+    private SudokuConfig solution;
 
     /**
      * Creates the Sudoku solver GUI.
@@ -82,17 +84,29 @@ public class SudokuMain extends Application {
         solveButton.setMinWidth(75);
         solveButton.setStyle("-fx-font-size:16px");
         solveButton.setOnAction(event -> {
-            TopText.setText("Working...");
+            if (solution == null){
+                TopText.setText("Working...");
 
-            // Solving occurs on a different thread from JavaFX to avoid interruptions of GUI text updates
-            Task<Void> solveTask = new Task<>() {
-                @Override
-                protected Void call() {
-                    solve();
-                    return null;
+                // Solving occurs on a different thread from JavaFX to avoid interruptions of GUI text updates
+                Task<Void> solveTask = new Task<>() {
+                    @Override
+                    protected Void call() {
+                        Optional<SudokuConfig> sol = solve(false);
+                        sol.ifPresent(sc -> solution = sc);
+                        sol.ifPresent(sc -> showSolution(solution.getGrid(), grid));
+                        return null;
+                    }
+                };
+                new Thread(solveTask).start();
+            }
+            else{
+                // If the solution has already been calculated, no need to calculate it again.
+                boolean textCheck = TopText.getText().equals("Solved!") || TopText.getText().equals("Already solved!");
+                TopText.setText(textCheck ? "Already solved!" : "Solved!");
+                if (!textCheck){
+                    showSolution(solution.getGrid(), grid);
                 }
-            };
-            new Thread(solveTask).start();
+            }
         });
 
         // initialize the reset button
@@ -105,10 +119,48 @@ public class SudokuMain extends Application {
             makeSudokuGrid(grid);
             TopText.setText("Reset!");
         });
-        fp.setAlignment(Pos.CENTER);
-        bp.setBottom(fp);
+
+        // initialize the hint button
+        fp.getChildren().add(hintButton);
+        hintButton.setMinHeight(50);
+        hintButton.setMinWidth(75);
+        hintButton.setStyle("-fx-font-size:16px");
+        hintButton.setOnAction(event -> {
+            // TODO: Have tiles revealed from a hint be the same blue color that appears after clicking solve.
+            // TODO: If the hint button finds no solution, it should hold this value instead of keeping solution null.
+            //  This is so the solve button doesn't need to recheck if pressed second. Vice versa applies.
+            Random rand = new Random();
+            Optional<SudokuConfig> sol = solve(true);
+            sol.ifPresent(sc -> solution = sc);
+            int row = rand.nextInt(9);
+            int col = rand.nextInt(9);
+            boolean solved = true;
+
+            // I cannot tell you how much it annoys me that I have to write this
+            for (int i = 0; i < 9; i++){
+                for (int j = 0; j < 9; j++){
+                    if (grid[i][j] == '-') {
+                        solved = false;
+                        break;
+                    }
+                }
+            }
+
+            while (grid[row][col] != '-' && !solved){
+                row = rand.nextInt(9);
+                col = rand.nextInt(9);
+            }
+
+            if (sol.isPresent()){
+                grid[row][col] = solution.getGrid()[row][col].getVal();
+                makeSudokuGrid(grid);
+            }
+        });
+
 
         // Put all the elements together
+        fp.setAlignment(Pos.CENTER);
+        bp.setBottom(fp);
         Scene scene = new Scene(bp);
         scene.setOnKeyPressed(this::keyPressed);
         stage.setScene(scene);
@@ -158,6 +210,7 @@ public class SudokuMain extends Application {
      */
     private void initGrid(){
         grid = new char[9][9];
+        solution = null;
         for (int i = 0; i < 9; i++){
             for (int j = 0; j < 9; j++){
                 grid[i][j] = '-';
@@ -258,8 +311,11 @@ public class SudokuMain extends Application {
     /**
      * The action that occurs when the solve button is pushed. This method is broken down into four steps,
      * which are documented as the code goes on.
+     *
+     * @param hint whether the function call was used for hint giving purposes or not
+     * @return the solution
      */
-    private void solve(){
+    private Optional<SudokuConfig> solve(boolean hint){
         try{
             // write the grid to an output file, custom.txt, so a Sudoku Configuration can be made from it later
             try (BufferedWriter fileWriter = new BufferedWriter(new FileWriter("data/custom.txt"))){
@@ -278,19 +334,19 @@ public class SudokuMain extends Application {
                 if (!sc.rowCheck(r)){
                     int finalR = r;
                     Platform.runLater(() -> TopText.setText("Error: Row " + (finalR + 1) + " is invalid."));
-                    return;
+                    return Optional.empty();
                 }
                 for (int c = 0; c < 9; c++){
                     if (!sc.colCheck(c)){
                         int finalC = c;
                         Platform.runLater(() -> TopText.setText("Error: Column " + (finalC + 1) + " is invalid."));
-                        return;
+                        return Optional.empty();
                     }
                     if (!sc.boxCheck(r, c)){
                         int finalR = r;
                         int finalC = c;
                         Platform.runLater(() -> TopText.setText("Error: Box starting at (" + finalR + ", " + finalC + ") is invalid."));
-                        return;
+                        return Optional.empty();
                     }
                 }
             }
@@ -315,13 +371,13 @@ public class SudokuMain extends Application {
                 }
                 if (j == 2){
                     Platform.runLater(() -> TopText.setText("Error: Not enough unique values"));
-                    return;
+                    return Optional.empty();
                 }
             }
             sum = Arrays.stream(count).sum();
             if (sum < 16){
                 Platform.runLater(() -> TopText.setText("Error: Need at least 16 values, there are only " + sum));
-                return;
+                return Optional.empty();
             }
 
             // Solve the puzzle, unless it is already solved
@@ -333,17 +389,19 @@ public class SudokuMain extends Application {
                 sc = solver.soften(sc); // partial logical solver
                 Optional<SudokuConfig> solution = solver.solve(sc); // solver using backtracking
                 if (solution.isPresent()){
-                    showSolution(solution.get().getGrid(), grid);
-                    Platform.runLater(() -> TopText.setText("Solved!"));
+                    Platform.runLater(() -> TopText.setText(hint ? "Hint given!" : "Solved!"));
+                    return solution;
                 }
                 else{
                     Platform.runLater(() -> TopText.setText("No Solution!"));
+                    return Optional.empty();
                 }
             }
         }
         catch(IOException ignored){
             System.err.println("Something went wrong!");
         }
+        return Optional.empty();
     }
 
     /**
